@@ -1,0 +1,7 @@
+/openvino/
+/openvino.genai/
+/.vscode/
+/models/
+__pycache__/
+*.py[cod]
+.DS_Store
