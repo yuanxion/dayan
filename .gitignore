@@ -1,7 +1,10 @@
+/frameworks.ai.openvino.llm.prc.gpu-harness/
+/frameworks.ai.openvino.llm.prompts/
 /openvino/
 /openvino.genai/
 /.vscode/
 /models/
 __pycache__/
+/tasks/
 *.py[cod]
 .DS_Store

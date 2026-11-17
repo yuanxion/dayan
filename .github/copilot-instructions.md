@@ -28,6 +28,25 @@ this repository's Git index.
 - Respect the instructions and Git state of nested repositories. Never clean,
   reset, or overwrite unrelated work.
 
+## Evidence and answer deliverables
+
+- Support factual answers, progress claims, and completion claims with concrete
+  evidence: clickable log/report/data/script paths, relevant code locations,
+  reproducible commands, or authoritative URLs. State what each item proves and
+  identify unavailable or unverified evidence; do not answer only "it works".
+- Give the conclusion and interpreted results as well as evidence. For collected
+  metrics, deliver a readable `report.md` with labeled result tables and a CSV or
+  TSV with explicit iteration/token/layer identities, units, and denominators.
+  Link the exact files in the answer, distinguish sampled from whole-run results,
+  and do not leave the user to locate, aggregate, or guess the conclusion.
+- Explain specific questions with a concrete example from the actual logs,
+  measurements, code, or model whenever available. Cite the source and show the
+  relevant numbers or identities. If no real example exists, label an invented
+  example explicitly as hypothetical; never present it as observed evidence.
+- These requirements apply to the coordinator and every specialist. Include
+  them in handoff acceptance criteria; specialist returns must supply evidence,
+  conclusions, and a real example when relevant, not just a success status.
+
 ## Responsiveness and changed requests
 
 - At the next available control point, acknowledge new user input before

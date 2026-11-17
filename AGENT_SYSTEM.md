@@ -55,6 +55,22 @@ delegation actually ran.
    report the task as partial/blocked, not complete. Record useful knowledge
    only after verifying it and its scope.
 
+## Required answer deliverables
+
+1. Provide concrete evidence for factual answers and progress/completion claims:
+   clickable log, script, report, data, code, or authoritative URL references.
+   Explain what the evidence establishes and what remains unverified.
+2. Deliver interpreted conclusions, not just artifact paths or a success label.
+   Metrics tasks require `report.md` with labeled result tables and CSV/TSV data
+   containing explicit iteration/token/layer identities, units, and denominators.
+   The user must not have to aggregate results or guess the conclusion.
+3. Use a real example from the actual logs, measurements, code, or model to
+   explain specific questions whenever possible. Cite its source and show the
+   relevant values. Clearly label an invented example as hypothetical.
+
+These requirements apply to every role, every handoff, and the final answer.
+The verifier checks both artifact correctness and these delivery requirements.
+
 ## Task record format
 
 Each task tracks: ID, request, status (`queued`, `active`, `blocked`, `review`,
