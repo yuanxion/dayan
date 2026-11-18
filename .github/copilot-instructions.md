@@ -4,31 +4,48 @@ This repository is the control plane for the assistant. The nested `/openvino/`
 checkout is a separate working repository and is intentionally excluded from
 this repository's Git index.
 
+## Selectable modes
+
+Use the VS Code agent picker to select `Simple` or `Complex`; the selected
+profile is the mode switch. Do not silently change modes. `Simple` is a direct,
+single-agent Copilot workflow: it can answer, edit files, and run relevant
+checks, but must not delegate, create task records, build formal evidence
+packets, or require independent verification. `Complex` uses the coordinator
+and the full planning, delegation, task-tracking, evidence, and verification
+workflow below. Neither mode commits or submits changes unless the user
+explicitly asks.
+
 ## Operating rules
 
-- The coordinator owns the user goal through final verification and reporting.
-- For multi-step work, maintain a task record under `tasks/` with an owner,
-  status, acceptance criteria, evidence, next action, and blockers.
-- Delegate bounded work to the named specialist agents when agent delegation is
-  available. Do not require a user handoff between routine workflow stages.
-- Every handoff must state the goal, scope, inputs, expected output, acceptance
-  criteria, and current evidence. The receiving agent returns completed work,
+- In Complex mode, the coordinator owns the user goal through final verification
+  and reporting.
+- In Complex mode, maintain a task record under `tasks/` for multi-step work,
+  with an owner, status, acceptance criteria, evidence, next action, and blockers.
+- In Complex mode, delegate bounded work to the named specialist agents when
+  agent delegation is available. Do not require a user handoff between routine
+  workflow stages.
+- In Complex mode, every handoff must state the goal, scope, inputs, expected
+  output, acceptance criteria, and current evidence. The receiving agent
+  returns completed work,
   checks run, assumptions, and unresolved blockers.
-- Treat implementer completion as `review`, not `done`. The verifier checks
-  acceptance criteria independently. Only the coordinator closes the task.
+- In Complex mode, treat implementer completion as `review`, not `done`. The
+  verifier checks acceptance criteria independently. Only the coordinator
+  closes the task.
 - Ask the user only when a consequential ambiguity, missing permission, or
   irreversible/high-risk choice blocks safe progress. Bundle related questions;
   otherwise choose a conservative default and record the assumption.
 - Bound retries. After two failed attempts at the same approach, revise the
   approach or report a concrete blocker instead of looping.
-- Never claim success without observable evidence. Distinguish passed, failed,
+- Report checks and results honestly; do not claim a check passed if it was not
+  run or its result is unknown. In Complex mode, distinguish passed, failed,
   skipped, and unavailable checks.
-- Save only confirmed, reusable knowledge in `knowledge/` or `skills/`. Keep
-  task-specific notes in `tasks/`; do not store secrets or raw conversation logs.
+- In Complex mode, save only confirmed, reusable knowledge in `knowledge/` or
+  `skills/`. Keep task-specific notes in `tasks/`; do not store secrets or raw
+  conversation logs.
 - Respect the instructions and Git state of nested repositories. Never clean,
   reset, or overwrite unrelated work.
 
-## Evidence and answer deliverables
+## Evidence and answer deliverables (Complex mode)
 
 - Support factual answers, progress claims, and completion claims with concrete
   evidence: clickable log/report/data/script paths, relevant code locations,
@@ -52,10 +69,10 @@ this repository's Git index.
 - At the next available control point, acknowledge new user input before
   continuing the old plan. A correction or cancellation takes priority over
   queued work; do not wait for an entire experiment sweep or delegation chain.
-- The coordinator records the latest explicit configuration and propagates it
-  to every affected runner, checker, and handoff. Recheck it before launching
+- In Complex mode, the coordinator records the latest explicit configuration
+  and propagates it to every affected runner, checker, and handoff. Recheck it before launching
   each expensive step; never shorten requested tests without user approval.
-- Keep specialist handoffs bounded. Do not delegate a long execution-and-review
+- In Complex mode, keep specialist handoffs bounded. Do not delegate a long execution-and-review
   chain that prevents the coordinator from handling new input. Use tracked
   tasks and host-supported interruption when available, retaining process/task
   IDs, logs, status, and a safe stop/resume boundary.

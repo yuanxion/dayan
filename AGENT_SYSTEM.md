@@ -1,12 +1,25 @@
-# Multi-Agent Assistant System
+# Assistant Modes
 
 ## Purpose
 
-Provide a general-purpose assistant workflow that plans, executes, verifies,
-and records work in this repository. No agent can guarantee every possible
-task; it must report capability, permission, and environment limits honestly.
+This repository exposes two selectable VS Code agents in `.github/agents/`:
+`Simple` for direct single-agent work and `Complex` for coordinated multi-agent
+work. The selected profile determines the workflow; do not silently switch
+modes. No agent can guarantee every possible task; report capability,
+permission, and environment limits honestly.
 
-## Roles
+## Modes
+
+- **Simple**: handle the request directly. It may inspect and edit code and run
+   relevant checks, but does not delegate, create task records, assemble formal
+   evidence packets, or run an independent-verifier workflow. Report relevant
+   checks briefly. Do not commit unless explicitly asked.
+- **Complex**: the coordinator plans and owns the work end to end. For
+   multi-step work it records the task under `tasks/`, delegates bounded work to
+   specialists when useful, independently verifies acceptance criteria, and
+   reports evidence and outcomes. Do not commit unless explicitly asked.
+
+## Complex Mode Roles
 
 - **Coordinator**: owns the request, task state, delegation, recovery, and final
   answer. It is the only role that declares a task complete.
@@ -22,10 +35,9 @@ task; it must report capability, permission, and environment limits honestly.
 - **Knowledge curator**: extracts confirmed reusable procedures after the task,
   checks for duplication, and records scope and provenance.
 
-Use the smallest team that provides adequate verification. For simple work the
-coordinator may execute directly. For consequential or multi-stage work, use a
-separate verifier. Delegate only when the host exposes agent delegation; if not,
-follow the same roles sequentially and record that limitation.
+In Complex mode, use the smallest team that provides adequate verification.
+Delegate only when the host exposes agent delegation; if not, follow the same
+roles sequentially and record that limitation.
 
 Workspace agent profiles live in `.github/agents/` and reusable skills live in
 `.github/skills/`, matching VS Code Copilot's project locations. Tool aliases,
@@ -33,7 +45,7 @@ subagent invocation, and persistence vary by harness. Verify profiles in the
 intended harness; instructions and profile discovery alone do not prove that a
 delegation actually ran.
 
-## Task protocol
+## Complex Task Protocol
 
 1. Translate the request into a task record under `tasks/`. State the intended
    outcome, scope, assumptions, acceptance criteria, owner, and next action.
@@ -55,7 +67,7 @@ delegation actually ran.
    report the task as partial/blocked, not complete. Record useful knowledge
    only after verifying it and its scope.
 
-## Required answer deliverables
+## Complex Answer Deliverables
 
 1. Provide concrete evidence for factual answers and progress/completion claims:
    clickable log, script, report, data, code, or authoritative URL references.
@@ -68,8 +80,10 @@ delegation actually ran.
    explain specific questions whenever possible. Cite its source and show the
    relevant values. Clearly label an invented example as hypothetical.
 
-These requirements apply to every role, every handoff, and the final answer.
-The verifier checks both artifact correctness and these delivery requirements.
+These requirements apply to Complex mode, every Complex handoff, and its final
+answer. The verifier checks both artifact correctness and these delivery
+requirements. Simple mode should report relevant checks concisely without
+creating formal evidence artifacts unless the user asks.
 
 ## Task record format
 
