@@ -17,6 +17,11 @@ explicitly asks.
 
 ## Operating rules
 
+- For OpenVINO reference/base requests, load the `openvino-build` skill and
+  check `artifacts/openvino-reference/<full-commit>/` before switching source
+  revisions or rebuilding. Reuse a checksum-verified compatible cache; rebuild
+  only when it is absent, incompatible, or explicitly requested. Keep native
+  C++ and Python environments/results distinct. Do not overwrite cached bases.
 - In Complex mode, the coordinator owns the user goal through final verification
   and reporting.
 - In Complex mode, maintain a task record under `tasks/` for multi-step work,
