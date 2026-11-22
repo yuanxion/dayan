@@ -5,7 +5,7 @@ results="$root/tasks/017-timestamp-logging"
 stem="$results/${LES_LOG_STEM:-dual-layer-details}"
 base="$root/artifacts/openvino-reference/caa59b5b8a3874d2b7cb0651a56e99a9f38dc450"
 model="$root/models/MiniCPM-V-4.7-35B-A3B-int4-ov"
-for suffix in log csv benchmark.log exit; do
+for suffix in log csv benchmark.log exit walltime.txt; do
     [[ ! -e "$stem.$suffix" ]]
 done
 (
@@ -16,6 +16,9 @@ unset LOG_TOKEN_ID LOG_REQUEST LOG_REQUEST_CONTEXT LOG_BASELINE_CSV_PATH LOG_HAN
 unset LOG_CSV_PATH LOG_RUN_ID OV_GPU_MOE_LOG_PATH
 unset OV_GPU_LES_TIMELINE OV_GPU_LES_TIMELINE_COMPLETION OV_GPU_LES_TIMELINE_SAMPLE
 unset OV_GPU_LES_PREDICT_COMPARE MOE_OTD_LAYER_PERF_LOG MOE_REF_WAVE_HIT_COUNT
+if [[ ${LES_LOG_MODE:-details} == off ]]; then
+    unset OV_GPU_LES_ITT OV_GPU_LES_TRACE LES_OPENCL_PRELOAD LD_PRELOAD
+fi
 runtime=${LES_RUNTIME:-les}
 case "$runtime" in
     les)
@@ -60,7 +63,7 @@ fi
 sha256sum "$plugin_dir/libopenvino_intel_gpu_plugin.so" \
     "$base/bin/benchmark_vlm" > "$stem.sha256"
 status=0
-"${benchmark[@]}" --model "$model" --device GPU --offload-ratio 90 \
+/usr/bin/time -f '%e' -o "$stem.walltime.txt" "${benchmark[@]}" --model "$model" --device GPU --offload-ratio 90 \
     --weights-path "$model/openvino_language_model.bin" --request-metrics \
     --max_new_tokens 256 --num_warmup 1 --num_iter 3 \
     --prompt "$(cat "$base/prompt.txt")" > "$stem.benchmark.log" 2>&1 || status=$?

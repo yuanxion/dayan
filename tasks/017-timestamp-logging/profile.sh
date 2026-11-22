@@ -37,6 +37,7 @@ if [[ "$analysis" == opencl ]]; then
     if [[ "$status" == 0 ]]; then
         "$python" "$results/merge_opencl_trace.py" --opencl "$results/$name.opencl" \
             --les "$results/$name.les.json" --output "$results/$name.timeline.json" "${merge_options[@]}" \
+            --walltime "$results/$name.walltime.txt" \
             >> "$results/$name.collect.log" 2>&1 || status=$?
     fi
     printf '%s\n' "$status" > "$results/$name.collect.exit"
