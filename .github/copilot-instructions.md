@@ -49,6 +49,10 @@ explicitly asks.
   conversation logs.
 - Respect the instructions and Git state of nested repositories. Never clean,
   reset, or overwrite unrelated work.
+- For pip commands in this Intel environment, pass the verified proxy per
+  command: `--proxy http://child-prc.intel.com:913`. The reversed hostname
+  `prc-child.intel.com` does not resolve. Do not change global pip settings or
+  disable TLS verification unless explicitly requested.
 
 ## Evidence and answer deliverables (Complex mode)
 
