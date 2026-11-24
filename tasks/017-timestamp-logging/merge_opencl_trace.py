@@ -1,4 +1,5 @@
 import argparse
+import bisect
 import collections
 import json
 from pathlib import Path
@@ -32,6 +33,38 @@ def merge(opencl_path, les_path, output_path, api_only=False, selected_window=Fa
     phase_tracks = {}
     token_windows = {}
     native_end = 0
+    scopes = collections.defaultdict(list)
+    copying_threads = {}
+    for event in les:
+        if event.get("name") == "expert_copying":
+            args = event["args"]
+            copying_threads[(args["target_layer_index"], args["expert_id"], args["generation"])] = event["tid"]
+    for event in les:
+        if event.get("ph") != "X" or event.get("dur", 0) <= 0:
+            continue
+        args = event["args"]
+        if event["name"][0].isdigit():
+            track = phase_tracks.setdefault(args["layer_index"], (1 << 28) + len(phase_tracks))
+            thread = event["tid"]
+            method = "same_thread_phase_containment"
+        elif event["name"].startswith("expert_host_copy"):
+            key = (args["target_layer_index"], args["slot"], args["expert_id"])
+            track = load_tracks.setdefault(key, (1 << 29) + len(load_tracks))
+            thread = copying_threads.get((args["target_layer_index"], args["expert_id"], args["generation"]))
+            if thread is None:
+                continue
+            method = "load_generation_worker_containment"
+        else:
+            continue
+        context = {field: args[field] for field in ("request", "token_index", "layer_index",
+                   "target_layer_index", "expert_id", "slot", "generation", "origin") if field in args}
+        context.update({"phase": event["name"], "association": method, "cpu_thread_id": thread})
+        scopes[thread].append((event["ts"] - start, event["ts"] + event["dur"] - start, track, context))
+    for thread in scopes:
+        scopes[thread].sort(key=lambda scope: scope[0])
+    scope_starts = {thread: [scope[0] for scope in values] for thread, values in scopes.items()}
+    correlations = []
+    named_tracks = set()
     with output_path.open("x", encoding="utf-8") as output:
         output.write('{"traceEvents":[\n')
         first = True
@@ -62,6 +95,13 @@ def merge(opencl_path, les_path, output_path, api_only=False, selected_window=Fa
                 category = "OpenCL.device" if device else "OpenCL.host"
                 event.setdefault("cat", category)
                 counts[category] += 1
+                if not device and event["name"].startswith("clEnqueue") and "id" in event.get("args", {}):
+                    index = bisect.bisect_right(scope_starts.get(thread, []), event["ts"]) - 1
+                    if index >= 0:
+                        scope = scopes[thread][index]
+                        if event["ts"] < scope[1]:
+                            event["args"]["les_context"] = scope[3]
+                            correlations.append((scope, event["ts"], thread, event["args"]["id"]))
             write(event)
         for event in les:
             base_name = event["name"]
@@ -69,17 +109,19 @@ def merge(opencl_path, les_path, output_path, api_only=False, selected_window=Fa
             if load_span:
                 args = event["args"]
                 key = (args["target_layer_index"], args["slot"], args["expert_id"])
-                if key not in load_tracks:
-                    load_tracks[key] = (1 << 29) + len(load_tracks)
+                load_tracks.setdefault(key, (1 << 29) + len(load_tracks))
+                if load_tracks[key] not in named_tracks:
                     write({"ph": "M", "name": "thread_name", "pid": process, "tid": load_tracks[key],
                            "args": {"name": f"LES layer {key[0]} expert {key[2]} slot {key[1]}"}})
+                    named_tracks.add(load_tracks[key])
                 event["tid"] = load_tracks[key]
             elif event.get("ph") == "X":
                 thread = event["args"]["layer_index"]
-                if thread not in phase_tracks:
-                    phase_tracks[thread] = (1 << 28) + len(phase_tracks)
+                phase_tracks.setdefault(thread, (1 << 28) + len(phase_tracks))
+                if phase_tracks[thread] not in named_tracks:
                     write({"ph": "M", "name": "thread_name", "pid": process, "tid": phase_tracks[thread],
                            "args": {"name": f"LES phases layer_index: {thread}"}})
+                    named_tracks.add(phase_tracks[thread])
                 event["tid"] = phase_tracks[thread]
             if "ts" in event:
                 event["ts"] -= start
@@ -98,6 +140,13 @@ def merge(opencl_path, les_path, output_path, api_only=False, selected_window=Fa
                     bounds[0] = min(bounds[0], event["ts"])
                     bounds[1] = max(bounds[1], event["ts"] + event["dur"])
             write(event)
+        for scope, timestamp, thread, command in correlations:
+            flow_id = (1 << 62) + command
+            write({"ph": "s", "cat": "LES.correlation", "name": "LES to OpenCL enqueue",
+                   "pid": process, "tid": scope[2], "ts": scope[0], "id": flow_id})
+            write({"ph": "f", "cat": "LES.correlation", "name": "LES to OpenCL enqueue",
+                   "pid": process, "tid": thread, "ts": timestamp, "id": flow_id, "bp": "e"})
+        counts["LES.enqueue_flows"] = len(correlations)
         summary_track = 1 << 27
         token_track = summary_track + 1
         write({"ph": "M", "name": "thread_name", "pid": process, "tid": summary_track,

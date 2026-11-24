@@ -24,13 +24,18 @@ if [[ "$analysis" == opencl ]]; then
         native_timing=0
         merge_options+=(--api-only)
     fi
+    case ${LES_TRACE_SELECTED_WINDOW:-0} in
+        0) ;;
+        1) merge_options+=(--selected-window) ;;
+        *) printf 'Invalid LES_TRACE_SELECTED_WINDOW\n' >&2; return 1 ;;
+    esac
     [[ ! -e "$results/$name.opencl" && ! -e "$results/$name.les.json" ]]
     [[ ! -e "$results/$name.timeline.json" && ! -e "$results/$name.collect.log" ]]
     mkdir "$results/$name.opencl"
     status=0
     /usr/bin/env CLI_OpenCLFileName=/lib/x86_64-linux-gnu/libOpenCL.so.1 \
         CLI_DumpDir="$results/$name.opencl" CLI_ChromeCallLogging=1 CLI_ChromePerformanceTiming="$native_timing" \
-        CLI_ChromePerformanceTimingInStages="$native_timing" CLI_ChromeFlowEvents="$native_timing" CLI_ITTCallLogging=1 \
+        CLI_ChromePerformanceTimingInStages="${LES_TRACE_GPU_STAGES:-0}" CLI_ChromeFlowEvents="$native_timing" CLI_ITTCallLogging=1 \
         LES_OPENCL_PRELOAD="$library" OV_GPU_LES_TRACE="$results/$name.les.json" \
         OV_GPU_LES_ITT=1 LES_LOG_MODE=itt LES_RUNTIME=les LES_GPU_PROFILE=0 LES_LOG_STEM="$name" \
         bash "$results/run.sh" > "$results/$name.collect.log" 2>&1 || status=$?

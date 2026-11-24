@@ -24,6 +24,13 @@ successfully after restoring the LES checkout and LES runtime. The Python
 bindings were disabled; this is not a cached Python benchmark environment.
 Model weights and system GPU drivers remain external.
 
+For native comparisons after a core version change, verify ELF dependencies,
+not only `LD_LIBRARY_PATH`. In this workspace, master `62b6251ba0` builds
+`libopenvino.so.2700`, while the preserved GenAI/benchmarks required `.2651`.
+Rebuild GenAI, tokenizers, and the benchmark against the new core; do not retain
+the old core or disguise its ABI with a symlink. Preserve explicit build-only
+version-compatibility patches and library checksums in the runtime provenance.
+
 ## Procedure
 
 1. Confirm the OpenVINO checkout path and inspect its Git status before changing

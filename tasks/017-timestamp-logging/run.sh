@@ -54,8 +54,8 @@ esac
 if [[ "$mode" == off ]]; then
     unset OV_GPU_LES_ITT
 else
-    export LOG_TOKEN_ID='1,2,3,4,5,6,7,8'
-    export LOG_REQUEST='measured:0'
+    export LOG_TOKEN_ID=${LES_LOG_TOKEN_ID:-1,2,3,4,5,6,7,8}
+    export LOG_REQUEST=${LES_LOG_REQUEST:-measured:0}
 fi
 if [[ "$mode" == itt ]]; then
     export OV_GPU_LES_ITT=1
