@@ -12,16 +12,66 @@ single-agent Copilot workflow: it can answer, edit files, and run relevant
 checks, but must not delegate, create task records, build formal evidence
 packets, or require independent verification. `Complex` uses the coordinator
 and the full planning, delegation, task-tracking, evidence, and verification
-workflow below. Neither mode commits or submits changes unless the user
-explicitly asks.
+workflow below. Local fix commits follow the standing authorization below.
+Neither mode pushes or submits changes unless the user explicitly asks.
 
 ## Operating rules
 
+- Unless the user explicitly requests a broader scope, apply their requests,
+  preferences, and reusable knowledge only to the current workspace. Save them
+  inside this repository; do not create or modify cross-workspace personal
+  instructions or memory without an explicit request.
+- Use Python for new data processing, log/CSV analysis, validation scripts,
+  and bulk text-processing helpers. Do not use Perl for subsequent work.
+  Preserve historical scripts/results unless replacement is explicitly needed.
+- The user authorizes local commits after a requested fix, feature, or
+  performance improvement is genuinely resolved and focused checks pass. Do
+  not require another request to commit that verified change. Commit only the
+  relevant code/tests, preserve unrelated
+  staged changes, and report the commit hash and owning repository. This is
+  workspace-local authorization, not permission to push, amend, or submit.
+- Output equivalence does not establish model-answer correctness. Inspect and
+  link the verbatim output; distinguish token-limit truncation, unfinished
+  thinking, completed-answer quality, and offload/non-offload equivalence.
+  Do not claim the whole output problem is fixed from equality alone or commit
+  unverified diagnostic candidates as completed fixes.
+- When a no-offload baseline has already been measured, lock its exact output
+  files and runtime before changing code. Do not change no-offload numerics to
+  make offload outputs agree. Validate both the new no-offload and offload
+  outputs against that original baseline, not only against each other. For
+  MiniCPM5 here, the user's golden is
+  `tasks/1123-moe_offload/outputs/debug-offload85-20261123/resident-fused-complete-runtime.*.txt`.
+- When a local commit is requested, use `git commit -s`. Keep the commit
+  subject a short, clear single-line description; avoid long message bodies
+  apart from the generated Signed-off-by trailer. For this user's local
+  commits and requested rebase/replay work, use author and committer identity
+  `yuan.xiong <yuan.xiong@intel.com>` and retain the Signed-off-by trailer.
+  Never use `git commit
+  --amend` unless the user explicitly requests it. Make one commit per feature,
+  and keep functional changes and debug/logging changes in separate commits.
+  Keep feature, bug-fix, and performance commits first; put optional debug,
+  logging, tracing, and profiling commits at the end of the series. Split
+  mixed commits by behavior, including their tests and build wiring, rather
+  than classifying only by filename or commit title. Functional code must not
+  depend on the optional diagnostic tail. Verify that the functional-only
+  revision builds and passes focused checks, and that replaying the diagnostic
+  patches restores the intended full tree. Keep diagnostic commits exportable
+  individually with `git format-patch` and replayable in order with `git am`;
+  document dependencies between those patches. This lets the user remove the
+  diagnostic tail for submission and reapply it only when debugging. Do not
+  rewrite history or remove that tail without a user request; preserve a
+  recovery ref before any authorized history rewrite.
+  The standing authorization above covers verified local fixes, features,
+  and performance improvements only; other
+  commits and all pushes still require an explicit user request.
 - For OpenVINO reference/base requests, load the `openvino-build` skill and
   check `artifacts/openvino-reference/<full-commit>/` before switching source
   revisions or rebuilding. Reuse a checksum-verified compatible cache; rebuild
   only when it is absent, incompatible, or explicitly requested. Keep native
   C++ and Python environments/results distinct. Do not overwrite cached bases.
+- For MiniCPM5 offload tests in this workspace, default to offload ratio 85
+  unless the user explicitly requests another ratio. Preserve earlier 90%
+  results; do not change LES/cache/prefetch strategy just to align outputs.
 - In Complex mode, the coordinator owns the user goal through final verification
   and reporting.
 - In Complex mode, maintain a task record under `tasks/` for multi-step work,
@@ -44,6 +94,12 @@ explicitly asks.
 - Report checks and results honestly; do not claim a check passed if it was not
   run or its result is unknown. In Complex mode, distinguish passed, failed,
   skipped, and unavailable checks.
+- When reporting results in any mode, use detailed tables with a commit column
+  on every result table. Include relevant configuration columns such as offload
+  ratio, model, input-token file/source and selected record, actual input/output
+  token counts, LES mode, and iteration counts. Identify uncommitted patches
+  separately from the base commit; never present a base commit as a committed
+  patched revision. Include saved build/runtime paths and provenance when relevant.
 - In Complex mode, save only confirmed, reusable knowledge in `knowledge/` or
   `skills/`. Keep task-specific notes in `tasks/`; do not store secrets or raw
   conversation logs.
@@ -88,6 +144,19 @@ explicitly asks.
 - On cancellation or changed constraints, inspect actual process state first,
   stop only the affected task when needed, and prevent subsequent old-config
   work from launching. Preserve partial logs and label superseded results.
-- Give brief progress updates during long work. Instructions cannot guarantee
-  response latency while the host or a tool is blocking; disclose that limit
-  rather than claiming background execution or a stop without evidence.
+- In both Simple and Complex modes, proactively give brief progress updates
+  during long work without waiting for the user to ask. Aim for an update
+  every 30-60 seconds when the host provides
+  control. State the current stage, verified progress or process state, and the
+  next action; do not invent an ETA or equate build-step counts with time remaining.
+- When performance comparison is requested after a build, the build alone is
+  not completion. Run the agreed comparisons and report measured timings,
+  configurations, repetitions, and correctness separately.
+- Explicitly distinguish still running, completed, failed, and blocked. Do not
+  use completion-style wording while requested work remains running or unfinished,
+  or imply it stopped merely because no new output appeared. On a status question,
+  report actual state and continue unless the user asks to pause or stop.
+- Instructions cannot guarantee response latency while the host or a tool is
+  blocking. Disclose that limit and report progress promptly at the next available
+  control point; do not claim a guaranteed background timer, automatic continuation,
+  or a stop without host support or evidence.
