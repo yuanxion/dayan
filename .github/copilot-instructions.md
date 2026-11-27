@@ -35,6 +35,11 @@ Neither mode pushes or submits changes unless the user explicitly asks.
   thinking, completed-answer quality, and offload/non-offload equivalence.
   Do not claim the whole output problem is fixed from equality alone or commit
   unverified diagnostic candidates as completed fixes.
+- In every model-output result or status report, link the exact raw output for
+  each tested mode and the named golden directly in the response. A report or
+  log link alone is not enough. State whether each mode matches the golden
+  separately from same-host equivalence, and show the first difference when
+  available. See the [model output FAQ](../knowledge/model-output-faq.md).
 - When a no-offload baseline has already been measured, lock its exact output
   files and runtime before changing code. Do not change no-offload numerics to
   make offload outputs agree. Validate both the new no-offload and offload
